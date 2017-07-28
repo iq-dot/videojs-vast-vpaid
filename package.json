@@ -45,7 +45,7 @@
     "karma-cli": "^1.0.1",
     "swfobject": "^2.2.1",
     "vpaid-flash-client": "^1.0.2",
-    "vpaid-html5-client": "^0.1.14"
+    "vpaid-html5-client": "file:../VPAIDHTML5Client"
   },
   "devDependencies": {
     "async": "^1.2.1",

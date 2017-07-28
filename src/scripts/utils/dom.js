@@ -187,7 +187,7 @@ dom.remove = function removeNode (node) {
 };
 
 dom.isDomElement = function isDomElement (o) {
-  return o instanceof Element;
+  return o instanceof Element || o.constructor.name === 'HTMLVideoElement';
 };
 
 dom.click = function (el, handler) {
