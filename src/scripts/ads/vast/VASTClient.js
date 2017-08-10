@@ -65,7 +65,9 @@ VASTClient.prototype._getVASTAd = function (adTag, callback) {
   const that = this;
 
   getAdWaterfall(adTag, (error, vastTree) => {
-    const waterfallAds = vastTree && utilities.isArray(vastTree.ads) ? vastTree.ads : null;
+    const waterfallAds = vastTree && utilities.isArray(vastTree.ads)
+            ? vastTree.ads.filter(a => !(a.wrapper && a.wrapper['@fallbackOnNoAd']))
+            : null;
 
     if (error) {
       that._trackError(error, waterfallAds);

@@ -14,6 +14,7 @@ module.exports = function VASTPlugin (options) {
   const player = this;
   const vast = new VASTClient();
   let adsCanceled = false;
+  let adTimeoutId = null;
   const defaultOpts = {
     // maximum amount of time in ms to wait to receive `adsready` from the ad
     // implementation after play has been requested. Ad implementations are
@@ -75,9 +76,7 @@ module.exports = function VASTPlugin (options) {
   if (settings.playAdAlways) {
     // No matter what happens we play a new ad before the user sees the video again.
     player.on('vast.contentEnd', () => {
-      setTimeout(() => {
-        player.trigger('vast.reset');
-      }, 0);
+      player.trigger('vast.reset');
     });
   }
 
@@ -108,7 +107,10 @@ module.exports = function VASTPlugin (options) {
   /** ** Local functions ****/
   function tryToPlayPrerollAd () {
     // We remove the poster to prevent flickering whenever the content starts playing
+    console.log('SUGGESTV: Try to playPreRoll');
+    player.pause();
     playerUtils.removeNativePoster(player);
+    dom.addClass(player.el(), 'vjs-vast-ad-loading');
 
     playerUtils.once(player, ['vast.adsCancel', 'vast.adEnd'], () => {
       removeAdUnit();
@@ -123,6 +125,7 @@ module.exports = function VASTPlugin (options) {
     ], (error, response) => {
       if (error) {
         trackAdError(error, response);
+        dom.removeClass(player.el(), 'vjs-vast-ad-loading');
       } else {
         player.trigger('vast.adEnd');
       }
@@ -142,6 +145,7 @@ module.exports = function VASTPlugin (options) {
         playerUtils.restorePlayerSnapshot(player, snapshot);
         snapshot = null;
       }
+      player.play();
     }
 
     function setupContentEvents () {
@@ -198,6 +202,7 @@ module.exports = function VASTPlugin (options) {
       adCancelTimeoutId = setTimeout(() => {
         trackAdError(new VASTError('timeout while waiting for the video to start playing', 402));
       }, settings.adCancelTimeout);
+      adTimeoutId = adCancelTimeoutId;
 
       playerUtils.once(player, ['vast.adStart', 'vast.adsCancel'], clearAdCancelTimeout);
 
@@ -206,6 +211,7 @@ module.exports = function VASTPlugin (options) {
         if (adCancelTimeoutId) {
           clearTimeout(adCancelTimeoutId);
           adCancelTimeoutId = null;
+          adTimeoutId = null;
         }
       }
 
@@ -253,9 +259,16 @@ module.exports = function VASTPlugin (options) {
   }
 
   function playAd (vastResponse, callback) {
+    console.log('SUGGESTV: playAd');
+
     // If the state is not 'preroll?' it means the ads were canceled therefore, we break the waterfall
     if (adsCanceled) {
       return;
+    }
+
+    if (adTimeoutId) {
+      clearTimeout(adTimeoutId);
+      adTimeoutId = null;
     }
 
     const adIntegrator = isVPAID(vastResponse) ? new VPAIDIntegrator(player, settings) : new VASTIntegrator(player);
@@ -293,6 +306,8 @@ module.exports = function VASTPlugin (options) {
 
     function preventManualProgress () {
       // IOS video clock is very unreliable and we need a 3 seconds threshold to ensure that the user forwarded/rewound the ad
+      console.log('SUGGESTV: preventManualProgress');
+
       const PROGRESS_THRESHOLD = 3;
       let previousTime = 0;
       let skipad_attempts = 0;
@@ -304,6 +319,8 @@ module.exports = function VASTPlugin (options) {
 
       /** * Local functions ***/
       function preventAdSkip () {
+        console.log('SUGGESTV: preventAdSkip');
+
         // Ignore ended event if the Ad time was not 'near' the end
         // and revert time to the previous 'valid' time
         if (player.duration() - previousTime > PROGRESS_THRESHOLD) {
@@ -314,6 +331,8 @@ module.exports = function VASTPlugin (options) {
       }
 
       function preventAdSeek () {
+        console.log('SUGGESTV: preventAdSeek');
+
         const currentTime = player.currentTime();
         const progressDelta = Math.abs(currentTime - previousTime);
 
@@ -342,7 +361,8 @@ module.exports = function VASTPlugin (options) {
   }
 
   function isVPAID (vastResponse) {
-    let i, len;
+    let i;
+    let len;
     const mediaFiles = vastResponse.mediaFiles;
 
     for (i = 0, len = mediaFiles.length; i < len; i++) {
