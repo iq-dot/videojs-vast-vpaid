@@ -274,6 +274,9 @@ module.exports = function VASTPlugin (options) {
     const adIntegrator = isVPAID(vastResponse) ? new VPAIDIntegrator(player, settings) : new VASTIntegrator(player);
     let adFinished = false;
 
+    console.log('SUGGESTV: Ad Type VPAID:', isVPAID(vastResponse), 'VAST:', !isVPAID(vastResponse));
+    console.log('SUGGESTV: Ad Unit', adIntegrator);
+
     playerUtils.once(player, ['vast.adStart', 'vast.adsCancel'], (evt) => {
       if (evt.type === 'vast.adStart') {
         addAdsLabel();

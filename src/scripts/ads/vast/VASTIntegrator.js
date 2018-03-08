@@ -78,6 +78,18 @@ VASTIntegrator.prototype._selectAdSource = function selectAdSource (response, ca
     return deltaA - deltaB;
   });
 
+  // Suggestv Code
+  mediaFiles.sort((a, b) => {
+    if (a.type === 'video/mp4') {
+      return -1;
+    }
+    if (b.type === 'video/mp4') {
+      return 1;
+    }
+
+    return 0;
+  });
+
   source = this.player.selectSource(mediaFiles).source;
 
   if (source) {
