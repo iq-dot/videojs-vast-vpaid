@@ -19,7 +19,7 @@ const element = document.createElement('div');
 const BlackPosterFactory = function (baseComponent) {
   return {
     /** @constructor */
-    init: function init (player, options) {
+    constructor: function init (player, options) {
       options.el = element;
       element.className = 'vjs-black-poster';
       baseComponent.call(this, player, options);
