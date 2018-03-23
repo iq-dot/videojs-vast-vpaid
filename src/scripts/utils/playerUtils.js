@@ -83,7 +83,9 @@ playerUtils.restorePlayerSnapshot = function restorePlayerSnapshot (player, snap
     ensureCanplayEvtGetsFired();
 
     // if the src changed for ad playback, reset it
-    player.reset();
+    if (snapshot.type === 'application/dash+xml') {
+      player.reset();
+    }
     player.src({src: snapshot.src, type: snapshot.type});
 
     // safari requires a call to `load` to pick up a changed source
